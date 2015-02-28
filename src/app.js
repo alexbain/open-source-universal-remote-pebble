@@ -38,6 +38,9 @@ Settings.config(
     if (e.failed) {
       console.log(e.response);
     }
+    
+    // Fetch some remotes!
+    fetchRemotes();
   }
 );
 
@@ -65,15 +68,14 @@ if (!Settings.data('ip')) {
   splashWindow.add(text);
   splashWindow.show();
 
-// If we already have a cached list of remotes, just show the UI
-}/* else if (Settings.data('remotes')) {
-  buildUI();
-  
-// We don't have any remotes, so we need to get them from API
-}*/ else {
+} else {
   
   console.log("We've got an IP address, hitting the API");
+  fetchRemotes();
+  
+}
 
+function fetchRemotes() {
   // Fetch remotes information from API, then show the UI
   ajax({
     url: Settings.data('ip') + 'remotes.json',
@@ -82,7 +84,11 @@ if (!Settings.data('ip')) {
     },
     function (data, status, request) {
       console.log("Got a response from the API!");
+      
+      // Save the remote response
       Settings.data('remotes', data);
+      
+      // Build out the UI
       buildUI();
     },
     function (error, status, request) {
@@ -111,7 +117,7 @@ if (!Settings.data('ip')) {
       errorWindow.add(errorText);
       errorWindow.show();
     }
-  );  
+  );
 }
 
 // Build out the remotes / commands menus
