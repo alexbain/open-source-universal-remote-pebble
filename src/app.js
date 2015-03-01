@@ -2,6 +2,13 @@
  *
  * Open Source Universal Remote - for Pebble
  *
+ * UI is dynamically built from the available remotes/commands from OSUR/lirc_web API.
+ * 
+ * opensourceuniversalremote.com
+ * 
+ * Alex Bain
+ * http://alexba.in
+ *
  */
 
 // Load external libraries
@@ -14,13 +21,13 @@ var UI = require('ui'),
 // Define configuration screen behavior
 Settings.config(
   
-  // External URL to load configuration screen from
+  // External URL to load configuration screen HTML from
   { url: 'http://abain.net/pebble-config.html' },
   
   // Callback function
   function(e) {
     
-    console.log("Log callback!");
+    console.log("Settings saved callback");
     console.log(e.options.ip);
     
     // Extract configuration options
@@ -39,7 +46,7 @@ Settings.config(
       console.log(e.response);
     }
     
-    // Fetch some remotes!
+    // Fetch remotes/commands from API
     fetchRemotes();
   }
 );
@@ -47,7 +54,7 @@ Settings.config(
 // If we don't have an IP address, show a message prompting user to run settings 
 if (!Settings.data('ip')) {
   
-  console.log("We don't have an IP address!");
+  console.log("No IP address found");
   
   // Create the window
   var splashWindow = new UI.Window();
@@ -56,7 +63,7 @@ if (!Settings.data('ip')) {
   var text = new UI.Text({
     position: new Vector2(0, 0),
     size: new Vector2(144, 168),
-    text: 'Please run settings on watch',
+    text: 'Please run settings on phone.',
     font: 'GOTHIC_28_BOLD',
     color: 'black',
     textOverflow: 'wrap',
@@ -122,30 +129,30 @@ function fetchRemotes() {
 
 // Build out the remotes / commands menus
 function buildUI() { 
-  console.log("Building the UI...");
+  console.log("Building the UI");
   
   var remotes = Settings.data('remotes'),
       formattedRemotes = [],
       commandsMenu = {};
 
   // For each remote:
-  // 1. Add it to formattedRemotes (for remotesMenu)
-  // 2. Add the list of commands to comamndsMenu[remoteName]
-  Object.keys(remotes).forEach(function(key) {
+  // 1. Add it to formattedRemotes, used by the remotes menu
+  // 2. Add the list of commands for each remmote to commandsMenu[remote]
+  Object.keys(remotes).forEach(function(remote) {
     formattedRemotes.push({
-      title: key
+      title: remote
     });
     
-    commandsMenu[key] = [];
+    commandsMenu[remote] = [];
     
-    remotes[key].forEach(function (command) {
-      commandsMenu[key].push({
+    remotes[remote].forEach(function (command) {
+      commandsMenu[remote].push({
         title: command
       });
     });
   });
   
-  console.log("Formatted remotes:");
+  console.log("Formatted remotes, ready for Pebble Menu:");
   console.log(formattedRemotes);
   
   // Define the menu used to display remotes
@@ -158,7 +165,7 @@ function buildUI() {
   // Definte the menu used to display commands for a remote
   var commandMenu = new UI.Menu({
     sections: [{
-      items: []
+      items: [] // Blank until user clicks on a remote
     }]
   });
   
@@ -182,6 +189,7 @@ function buildUI() {
       method: 'POST'
     });
     
+    // Vibrate immediately, even if API takes a second to respond
     Vibe.vibrate('short');
   });
 }
